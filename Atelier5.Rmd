@@ -1,0 +1,203 @@
+---
+title: "Atelier 5"
+author: "LOUIS Anaïs"
+date: "19/11/2019"
+output: pdf_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## Indice de masse corporelle (IMC) chez des enfants
+
+Un échantillon de dossiers d'enfants a ete saisi. Ce sont des enfants vus lors
+d'une visite en 1er section de maternelle en 1996-1997 dans des ecoles de 
+Bordeaux (Gironde, France). L’échantillon est constitue de 152 enfants ages de 3
+ou 4 ans. 
+
+### Variables et codage
+
+\begin{tabular}{|l|c|c|}
+\hline
+Description & Unite ou Codage & Variable \\
+\hline
+Sexe & \texttt{F} pour fille ; \texttt{G} pour garcon & \texttt{SEXE} \\
+\hline
+Ecole située en zone d'education prioritaire & \texttt{O} pour oui; \texttt{N} pour non & \texttt{zep} \\
+\hline
+Poids & \texttt{Kg} (arrondi à 100g près) & \texttt{poids} \\
+\hline
+Âge à la date de la visite & Années & \texttt{an} \\
+\hline
+Âge à la date de la visite & Mois & \texttt{mois} \\
+\hline
+Taille & Cm  (arrondi à 0.5cm près) & \texttt{taille} \\
+\hline
+\end{tabular}
+
+Vous avez de telecharcher le fichier \texttt{imcenfant.csv} de le site:
+
+\url{https://github.com/afalco/Atelier5/}
+
+
+
+```{r}
+imcenfant <- read.csv2("~/Downloads/Atelier5-master/imcenfant.csv")
+names(imcenfant)
+```
+
+et de répondre a toutes les questions suivantes:
+
+
+ 1. Calculer l'IMC de tous les enfants et l'âge et rajoutez une colonne pour l'âge et une autre pour l' IMC.
+ 
+```{r}
+# Utiliser pour repondre la question 1
+IMC <- imcenfant$poids/(imcenfant$taille/100)^2
+age <- imcenfant$an + imcenfant$mois/12
+imcenfant <- data.frame(imcenfant,age,IMC)
+```
+
+Commentaire: Les dossiers d'enfants montre qu'il y a une tranche d'âge et d'IMC assez homogène.
+
+ 2. Extrayez les enfants ayant un IMC < 15 et un age <= 3.5 ans.
+ 
+```{r}
+# Utiliser pour repondre la question 2
+enfants <- imcenfant$SEXE[imcenfant$IMC < 15 & imcenfant$age <= 3.5]
+table(enfants)
+```
+
+Commentaire: Nous voyons qu'avec les critères comme l'IMC < 15 et l'âge de 3.5 ans, nous avons autant de filles que de garçons. 
+
+ 3. Donnez le nombre d'enfants vérifiant les conditions ci-dessus.
+ 
+```{r}
+# Utiliser pour repondre la question 3
+length(enfants)
+```
+ 
+Commentaire: Il y a donc 8 enfants rentrant dans les critères demandés.
+
+ 4. Est-ce que la plus part des enfants ayant un IMC < 15 et un age <= 3.5 ans sont dans une école située en zone d’éducation prioritaire?
+ 
+```{r}
+# Utiliser pour repondre la question 4
+enfants.zep <- imcenfant$zep[imcenfant$IMC < 15 & imcenfant$age <= 3.5]
+table(enfants.zep)
+```
+ 
+ Commentaire: Oui, car il y a plus d'enfants suivant une scolarité dans une école dans une zone d'éducation prioritaire mais la différence n'est pas énorme.
+
+ 5. Représentez la fonction de densité de probabilité de l'IMC chez l'échantillon.
+ 
+```{r}
+# Utiliser pour repondre la question 5
+hist(imcenfant$IMC,freq=FALSE,col = "red",xlab = "IMC",main = "Représentation la fonction de densité de probalité de l'IMC chez l'échantillon")
+```
+ 
+ Commentaire: Les IMCs des enfants sont surtout compris entre 15 et 17.
+
+
+  6. Est-ce on peut modelé l'IMC avec une variable aléatoire normal?
+
+6.1. Montrer que la différence entre la médian et la moyenne est très petite et alors on peut supposer que les deux sont égal.  
+    
+```{r}
+# Utiliser pour repondre la question 6.1*
+summary(imcenfant$IMC)
+```
+ 
+Commentaire: Oui,car la différence entre la moyenne et la médiane est de 0.02.
+
+
+6.2 Utilisez la fonction \texttt{qqplot()} pour étudier si l'IMC a le même fonction de distribution que une variable alèatoire normal. 
+  
+```{r}
+# Utiliser pour repondre la question 6.2
+z <- (imcenfant$IMC-mean(imcenfant$IMC))/sd(imcenfant$IMC)
+set.seed(123)
+n<-length(z)
+N<-rnorm(n)
+qqplot(z,N,xlim=c(-3,3),ylim=c(-3,3),xlab = "IMC standard",ylab = "N(0,1)")
+par(new=T)
+plot(z,z,type="l",col="red",xlim = c(-3,3),ylim = c(-3,3),xlab = "",ylab = "")
+```
+  
+Commentaire: Nous voyons grâce à la petite différence entre la moyenne et la médiane et au graphique que la distribution de l'IMC peut s'apparenter à celle d'une variable aléatoire normale.
+  
+6.3 Est-qu'on peut quantifier la différence entre les deux fonctions de distributions?
+  
+```{r}
+# Utiliser pour repondre la question 6.3
+x_maille <- seq(from=0,to=0.9,by=0.1)
+set.seed(123)
+A <- quantile(z,x_maille)
+B <- quantile(rnorm(length(imcenfant$IMC)),x_maille)
+erreur <- sum((A-B)^2)/length(x_maille)
+erreur
+```
+Commentaire: La différence entre les deux distributions sont de 1.2%, donc faible.
+
+ 
+ 7. Est-ce que l'IMC chez les enfants dans une école située en zone d’éducation prioritaire est différent de les enfants qui ne sont pas dans une école située en zone d’éducation prioritaire?
+ 
+7.1 Donnez le résumé statistique de l'IMC chez les enfants dans une école située en zone d’éducation prioritaire.
+
+```{r}
+# Utiliser pour repondre la question 7.1
+summary(imcenfant$IMC[imcenfant$zep=="O"])
+```
+
+Commentaire:  La différence entre la moyenne et la médiane est de 0.09 et nous pouvons donc dire que la distribution toute comme l'IMC peut s'apparenter à celle d'une variable aléatoire normale.
+ 
+7.2 Donnez le résumé statistique de l'IMC chez les enfants que ne sont pas dans une école située en zone d’éducation prioritaire. 
+
+```{r}
+# Utiliser pour repondre la question 7.2
+summary(imcenfant$IMC[imcenfant$zep=="N"])
+```
+ 
+ Commentaire: La différence entre la moyenne et la médiane est de 0.08 et nous pouvons donc dire que la distribution toute comme l'IMC peut s'apparenter à celle d'une variable aléatoire normale.
+
+
+  8. Quelle est la probabilité de trouver une fille dans dans une école située en zone d’éducation prioritaire?
+  
+```{r}
+# Utiliser pour repondre la question 8
+proba <- length(imcenfant$poids[imcenfant$SEXE=="F" & imcenfant$zep=="O"])/length(imcenfant$SEXE)
+proba
+```
+La probabilité est `r proba`.
+  
+  9. Est-ce qu'on peut modelé la taille des enfants avec un variable aléatoire normal?
+  
+```{r}
+# Utiliser pour repondre la question 9
+summary(imcenfant$taille)
+zt <- (imcenfant$taille-mean(imcenfant$taille))/sd(imcenfant$taille)
+n<-length(zt)
+N<-rnorm(n)
+qqplot(zt,N,xlim=c(-3,3),ylim=c(-3,3),xlab = "taille standard",ylab = "N(0,1)")
+par(new=T)
+plot(zt,zt,type="l",col="red",xlim = c(-3,3),ylim = c(-3,3),xlab = "",ylab = "")
+```
+  
+  Commentaire: La  différence entre la moyenne et la médiane est de 0.3, on peut donc modeler la taille avec une variable aléatoire normale.
+  
+  10. Est-ce qu'on peut modelé le poids des enfants avec un variable aléatoire normal?
+
+```{r}
+# Utiliser pour repondre la question 10
+summary(imcenfant$poids)
+zp <- (imcenfant$poids-mean(imcenfant$poids))/sd(imcenfant$poids)
+n<-length(zp)
+N<-rnorm(n)
+qqplot(zp,N,xlim=c(-3,3),ylim=c(-3,3),xlab = "poids standard",ylab = "N(0,1)")
+par(new=T)
+plot(zp,zp,type="l",col="red",xlim = c(-3,3),ylim = c(-3,3),xlab = "",ylab = "")
+
+```
+
+  Commentaire: La  différence entre la moyenne et la médiane est de 0.28, on peut donc modeler le poids avec une variable aléatoire normale. 
